@@ -1,0 +1,11 @@
+name: lama
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip
+  # PyTorch will be installed in the post-install script depending on the detected CUDA version
+  - pip:
+      - -r requirements.txt
