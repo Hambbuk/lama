@@ -3,15 +3,14 @@ import importlib, sys
 __version__ = "0.1.0"
 
 # Alias existing saicinpainting package under inpaint.models to avoid massive moves
-_saic = importlib.import_module("saicinpainting")
+_models = importlib.import_module("inpaint.models")
 
-# Register alias
-sys.modules[__name__ + ".models"] = _saic
+# Expose it as top-level alias too (optional)
+sys.modules[__name__ + ".models"] = _models
 
-# Ensure submodules resolve (e.g. inpaint.models.training)
-for name, module in list(sys.modules.items()):
-    if name.startswith("saicinpainting."):
-        sys.modules[name.replace("saicinpainting", __name__ + ".models", 1)] = module
+# Also make old 'saicinpainting' refer to same module for backward-compat
+sys.modules["saicinpainting"] = _models
+_models.__name__ = "inpaint.models"  # ensure correct pkg name
 
 # Thin util re-export (optional)
 from types import ModuleType
