@@ -135,3 +135,38 @@ dmypy.json
 .vscode/
 ## vim
 *.sw?
+
+# Model files and datasets
+*.pth
+*.pt
+*.ckpt
+*.pkl
+*.h5
+*.safetensors
+
+# Data files
+*.flist
+*.lst
+data/
+datasets/
+results/
+experiments/
+logs/
+runs/
+outputs/
+
+# Debug and test files
+*debug*
+*test*.py
+*test*.yaml
+*test*.json
+
+# Paper and experiment files
+paper_runfiles/
+ablv2_*
+*_experiment*
+*_ablation*
+
+# OS files
+.DS_Store
+Thumbs.db
