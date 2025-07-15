@@ -36,16 +36,11 @@ pip install --upgrade pip wheel
 # 2. Detect CUDA ------------------------------------------------------------
 CUDA_TAG="cpu"
 if command_exists nvidia-smi; then
-  CUDA_VER=$(nvidia-smi --query-gpu=driver_version --format=csv,noheader | head -1 | cut -d'.' -f1,2)
-  case "$CUDA_VER" in
-    12*) CUDA_TAG="cu121";;
-    11*) CUDA_TAG="cu118";;
-    10*) CUDA_TAG="cu117";;
-    *) CUDA_TAG="cpu";;
-  esac
-  echo "[SETUP] Detected NVIDIA driver, selecting torch build: $CUDA_TAG"
-else
-  echo "[SETUP] No NVIDIA GPU detected, installing CPU torch build"
+  DRIVER_VER=$(nvidia-smi --query-gpu=driver_version --format=csv,noheader | head -1)
+  MAJOR_MINOR=$(echo "$DRIVER_VER" | awk -F. '{print $1 $2}')  # e.g. 535.113 -> 53113 → too long, use first two comps
+  CUDA_DIGITS=$(echo "$DRIVER_VER" | cut -d'.' -f1,2 | tr -d '.') # 12.2 → 122 , 11.8 → 118
+  CUDA_TAG="cu${CUDA_DIGITS}"
+  echo "[SETUP] Detected NVIDIA driver $DRIVER_VER → Torch tag $CUDA_TAG"
 fi
 
 # 3. Install Torch ----------------------------------------------------------
