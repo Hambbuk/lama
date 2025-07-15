@@ -1,21 +1,13 @@
+# Core
+numpy
 pyyaml
 tqdm
-numpy
-easydict==1.9.0
-scikit-image==0.17.2
-opencv-python
-tensorflow
-joblib
-matplotlib
-pandas
-albumentations==0.5.2
-hydra-core==1.1.0
-pytorch-lightning==1.2.9
-tabulate
-kornia==0.5.0
-webdataset
-packaging
-wldhx.yadisk-direct
-onnx
 click
-scikit-learn==0.24.2
+# Deep learning
+pytorch-lightning>=2.0,<2.2
+onnx
+# Vision stack
+opencv-python
+albumentations
+# Alias utils rely on packaging, omegaconf comes via lightning
+packaging

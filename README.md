@@ -10,9 +10,8 @@ A lightweight wrapper around the original [LaMa](https://github.com/advimman/lam
 
 ## 1. Installation
 ```bash
-python -m venv venv && source venv/bin/activate  # optional but recommended
-pip install torch torchvision --extra-index-url https://download.pytorch.org/whl/cu118  # pick CUDA / CPU build you need
-pip install -r requirements.txt
+# one-liner (detects GPU & sets up env automatically)
+bash scripts/setup_env.sh myenv   # or omit name → 'inpaint' env
 ```
 
 ## 2. Quick start
