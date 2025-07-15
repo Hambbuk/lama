@@ -1,62 +1,78 @@
 #!/usr/bin/env bash
-# Simplest cross-platform environment bootstrap for the inpaint project.
-# 1. Creates and activates a Python env (conda > virtualenv > venv)
-# 2. Detects GPU / CUDA and installs the matching torch build
-# 3. Installs the rest of the requirements
-#
-# Usage:
-#   bash scripts/setup_env.sh [env_name]
-set -e
+set -euo pipefail
+# ---------------------------------------------------------------------------
+# Automatic environment bootstrap for the inpaint project.
+#  • Creates a Python env (conda > virtualenv > venv)
+#  • Detects CUDA driver and installs the correct torch+tv wheel,
+#    falling back to CPU build if wheel unavailable
+#  • Installs project deps via poetry / pip-tools / pip (in that order)
+#  • Runs an import-walk smoke test; aborts on the first failure
+# Usage:  bash scripts/setup_env.sh [env_name]  (default: inpaint)
+# ---------------------------------------------------------------------------
 ENV_NAME=${1:-inpaint}
+PY_VER=${PY_VER:-3.10}
+TORCH_REPO=https://download.pytorch.org/whl
+REQ=requirements.txt
 
-command_exists() { command -v "$1" >/dev/null 2>&1; }
+log(){ printf "\033[1;32m[SETUP]\033[0m %s\n" "$*"; }
+cmd(){ log "$*"; "$@"; }
 
-activate() { # shellcheck disable=SC1090
-  source "$1"
-  echo "Activated environment: $(python -V)"
-}
-
-# 1. Create env -------------------------------------------------------------
-if command_exists conda; then
-  echo "[SETUP] Using conda to create environment $ENV_NAME"
-  conda create -y -n "$ENV_NAME" python=3.10
-  activate "$(conda info --base)/etc/profile.d/conda.sh" && conda activate "$ENV_NAME"
-elif command_exists virtualenv; then
-  echo "[SETUP] Using virtualenv ($ENV_NAME)"
-  virtualenv "$ENV_NAME" --python=python3
-  activate "$ENV_NAME/bin/activate"
+# 1 ─ create env ------------------------------------------------------------
+if command -v conda &>/dev/null; then
+  cmd conda create -y -n "$ENV_NAME" "python=$PY_VER"
+  # shellcheck disable=SC1090
+  . "$(conda info --base)/etc/profile.d/conda.sh" && cmd conda activate "$ENV_NAME"
+elif command -v virtualenv &>/dev/null; then
+  cmd virtualenv "$ENV_NAME" --python=python3
+  # shellcheck disable=SC1091
+  . "$ENV_NAME/bin/activate"
 else
-  echo "[SETUP] Falling back to python -m venv ($ENV_NAME)"
-  python3 -m venv "$ENV_NAME"
-  activate "$ENV_NAME/bin/activate"
+  cmd python3 -m venv "$ENV_NAME"
+  # shellcheck disable=SC1091
+  . "$ENV_NAME/bin/activate"
+fi
+log "Python: $(python -V)"
+
+python -m pip install --upgrade pip wheel --quiet --progress-bar off
+
+# 2 ─ pick torch wheel tag --------------------------------------------------
+TAG=cpu
+if command -v nvidia-smi &>/dev/null; then
+  DRIVER=$(nvidia-smi --query-gpu=driver_version --format=csv,noheader | head -1)
+  TAG=cu$(echo "$DRIVER" | cut -d'.' -f1,2 | tr -d '.')
+  log "CUDA driver $DRIVER → torch tag $TAG"
+fi
+if ! python -m pip install --quiet --progress-bar off torch torchvision --extra-index-url "$TORCH_REPO/$TAG"; then
+  log "Wheel for $TAG not found → installing CPU build"
+  python -m pip install --quiet --progress-bar off torch torchvision --extra-index-url "$TORCH_REPO/cpu"
 fi
 
-pip install --upgrade pip wheel
-
-# 2. Detect CUDA ------------------------------------------------------------
-CUDA_TAG="cpu"
-if command_exists nvidia-smi; then
-  DRIVER_VER=$(nvidia-smi --query-gpu=driver_version --format=csv,noheader | head -1)
-  MAJOR_MINOR=$(echo "$DRIVER_VER" | awk -F. '{print $1 $2}')  # e.g. 535.113 -> 53113 → too long, use first two comps
-  CUDA_DIGITS=$(echo "$DRIVER_VER" | cut -d'.' -f1,2 | tr -d '.') # 12.2 → 122 , 11.8 → 118
-  CUDA_TAG="cu${CUDA_DIGITS}"
-  echo "[SETUP] Detected NVIDIA driver $DRIVER_VER → Torch tag $CUDA_TAG"
-fi
-
-# 3. Install Torch ----------------------------------------------------------
-TORCH_URL="https://download.pytorch.org/whl"
-if [ "$CUDA_TAG" = "cpu" ]; then
-  pip install torch torchvision --extra-index-url "$TORCH_URL/cpu"
+# 3 ─ project deps ----------------------------------------------------------
+if command -v poetry &>/dev/null && [ -f pyproject.toml ]; then
+  log "Using Poetry for dependency install"
+  cmd poetry install --without dev --no-interaction --no-root
+elif command -v pip-compile &>/dev/null && [ -f requirements.in ]; then
+  log "Using pip-tools (lock → install)"
+  cmd pip-compile requirements.in -o requirements.lock
+  cmd python -m pip install -r requirements.lock
 else
-  echo "[SETUP] Installing torch build from $TORCH_URL/$CUDA_TAG"
-  if ! pip install torch torchvision --extra-index-url "$TORCH_URL/$CUDA_TAG"; then
-    echo "[WARN] Specific wheel for tag $CUDA_TAG not found, falling back to CPU build"
-    pip install torch torchvision --extra-index-url "$TORCH_URL/cpu"
-  fi
+  cmd python -m pip install -r "$REQ"
 fi
 
-# 4. Install project requirements ------------------------------------------
-pip install -r requirements.txt
+# 4 ─ smoke test ------------------------------------------------------------
+python - <<'PY'
+import importlib, pkgutil, sys, inpaint
+fail = []
+for mod in pkgutil.walk_packages(inpaint.__path__, inpaint.__name__ + '.'):  # noqa
+    try:
+        importlib.import_module(mod.name)
+    except Exception as e:  # noqa
+        fail.append((mod.name, e))
+if fail:
+    for n,e in fail:
+        print('❌', n, '->', e)
+    raise SystemExit(f"{len(fail)} import failures")
+print('✓ import-walk OK')
+PY
 
-echo "[SETUP] Environment ready. You can now run:"
-echo "  python -m inpaint --help"
+log "Environment READY.  Try:  python -m inpaint --help"
