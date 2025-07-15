@@ -1,5 +1,21 @@
 # 🦙 LaMa: Resolution-robust Large Mask Inpainting with Fourier Convolutions
 
+## 🚀 Quick-Start: minimal workflow
+
+The `cleanlama/` package ships tiny, **self-contained CLIs** for everyday use:
+
+| task | command |
+|------|---------|
+| install deps | `pip install -r requirements.txt` |
+| train | `python -m cleanlama.train --config configs/training/lama-fourier.yaml --gpus 1` |
+| inference | `python -m cleanlama.inference --checkpoint_dir ./experiments/20240101_123456 --input_dir ./demo --output_dir ./out` |
+| ONNX export | `python -m cleanlama.export_onnx --checkpoint_dir ./experiments/20240101_123456 --output lama.onnx` |
+
+These commands hide the complexity of the original repo while **re-using its proven implementation under the hood**.  
+Detailed options are available via `-h` on each script.
+
+---
+
 by Roman Suvorov, Elizaveta Logacheva, Anton Mashikhin, 
 Anastasia Remizova, Arsenii Ashukha, Aleksei Silvestrov, Naejin Kong, Harshith Goka, Kiwoong Park, Victor Lempitsky.
 
