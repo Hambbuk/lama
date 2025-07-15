@@ -9,7 +9,7 @@ A lightweight wrapper around the original [LaMa](https://github.com/advimman/lam
 ---
 
 ## 0. Try on Colab  
-[![Run in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/<org>/lama/blob/main/examples/quickstart.ipynb)
+[Quick-start guide](examples/quickstart.md) | [![Run in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/<org>/lama/blob/main/examples/quickstart.ipynb)
 
 ## 1. Installation
 ```bash
