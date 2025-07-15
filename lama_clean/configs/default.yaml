@@ -1,0 +1,146 @@
+# LaMa: Resolution-robust Large Mask Inpainting with Fourier Convolutions
+# Default Configuration
+
+# Model Architecture
+generator:
+  kind: ffc_resnet  # Fast Fourier Convolution ResNet
+  input_nc: 4       # 3 (RGB) + 1 (mask) channels
+  output_nc: 3      # RGB output
+  ngf: 64          # Base number of filters
+  n_downsampling: 3 # Number of downsampling layers
+  n_blocks: 18      # Number of ResNet blocks
+  add_out_act: sigmoid
+  
+  # FFC specific settings
+  init_conv_kwargs:
+    ratio_gin: 0
+    ratio_gout: 0
+    enable_lfu: false
+  
+  downsample_conv_kwargs:
+    ratio_gin: 0
+    ratio_gout: 0
+    enable_lfu: false
+  
+  resnet_conv_kwargs:
+    ratio_gin: 0.75  # Ratio of global (Fourier) features
+    ratio_gout: 0.75
+    enable_lfu: false
+
+discriminator:
+  kind: pix2pixhd_nlayer
+  input_nc: 3
+  ndf: 64
+  n_layers: 4
+  norm_layer: batch
+
+# Loss Functions
+losses:
+  l1:
+    weight_missing: 0
+    weight_known: 10
+  
+  perceptual:
+    weight: 0
+  
+  adversarial:
+    kind: r1
+    weight: 10
+    gp_coef: 0.001
+    mask_as_fake_target: true
+    allow_scale_mask: true
+  
+  feature_matching:
+    weight: 100
+  
+  resnet_pl:
+    weight: 30
+
+# Training Settings  
+training_model:
+  kind: default
+  concat_mask: true
+  visualize_each_iters: 1000
+  store_discr_outputs_for_vis: true
+
+# Data Settings
+data:
+  batch_size: 15
+  val_batch_size: 2
+  num_workers: 8
+  
+  train_shuffle: true
+  val_shuffle: false
+  
+  # Image preprocessing
+  input_size: 256
+  crop_size: 256
+  crop_type: random
+  
+  # Data augmentation
+  aug_types: ['median', 'blur']
+  aug_probs: [0.5, 0.5]
+  
+  # Mask generation
+  mask_gen_kwargs:
+    irregular_proba: 1
+    irregular_kwargs:
+      max_angle: 4
+      max_len: 200
+      max_width: 100
+      max_times: 5
+      min_times: 1
+
+# Optimizer Settings
+optimizers:
+  generator:
+    kind: adam
+    lr: 0.0001
+    betas: [0.0, 0.9]
+  
+  discriminator:
+    kind: adam  
+    lr: 0.0001
+    betas: [0.0, 0.9]
+
+# Trainer Settings
+trainer:
+  kwargs:
+    gpus: -1  # Use all available GPUs
+    accelerator: ddp
+    max_epochs: 100
+    gradient_clip_val: 1.0
+    log_every_n_steps: 50
+    val_check_interval: 1.0
+    limit_train_batches: 30000
+    limit_val_batches: 100
+    
+  # Checkpoint settings
+  checkpoint_kwargs:
+    save_top_k: 3
+    monitor: val_loss
+    mode: min
+    save_last: true
+    
+  # Early stopping
+  early_stopping: true
+  early_stopping_patience: 10
+
+# Logging and Visualization
+visualizer:
+  kind: directory
+  outdir: ${location.output_dir}/vis
+  
+evaluator:
+  kind: default
+  inpainted_key: inpainted
+  
+location:
+  output_dir: ./experiments
+  tb_dir: ./experiments/tb_logs
+  
+# Dataset paths (update these with your data)
+dataset:
+  train_dataroot: ./data/train
+  val_dataroot: ./data/val
+  test_dataroot: ./data/test

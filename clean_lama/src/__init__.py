@@ -1,1 +1,0 @@
-# LaMa Inpainting Package
