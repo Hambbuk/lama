@@ -17,3 +17,17 @@ from types import ModuleType
 _utils = ModuleType("inpaint.utils")
 setattr(_utils, "__doc__", "Utility helpers placeholder")
 sys.modules["inpaint.utils"] = _utils
+
+# Also expose as plain `models` for legacy code
+import pkgutil as _pkgutil
+
+sys.modules['models'] = _models
+
+# Map submodules: models.xxx -> inpaint.models.xxx
+for _mod in _pkgutil.walk_packages(_models.__path__, _models.__name__ + '.'):
+    _alias_name = _mod.name.replace('inpaint.models', 'models', 1)
+    if _alias_name not in sys.modules:
+        try:
+            sys.modules[_alias_name] = importlib.import_module(_mod.name)
+        except ModuleNotFoundError:
+            pass
