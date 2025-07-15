@@ -44,10 +44,15 @@ if command_exists nvidia-smi; then
 fi
 
 # 3. Install Torch ----------------------------------------------------------
+TORCH_URL="https://download.pytorch.org/whl"
 if [ "$CUDA_TAG" = "cpu" ]; then
-  pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+  pip install torch torchvision --extra-index-url "$TORCH_URL/cpu"
 else
-  pip install torch torchvision --index-url https://download.pytorch.org/whl/$CUDA_TAG
+  echo "[SETUP] Installing torch build from $TORCH_URL/$CUDA_TAG"
+  if ! pip install torch torchvision --extra-index-url "$TORCH_URL/$CUDA_TAG"; then
+    echo "[WARN] Specific wheel for tag $CUDA_TAG not found, falling back to CPU build"
+    pip install torch torchvision --extra-index-url "$TORCH_URL/cpu"
+  fi
 fi
 
 # 4. Install project requirements ------------------------------------------
