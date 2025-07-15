@@ -6,6 +6,7 @@ click
 # Deep learning
 pytorch-lightning>=2.0,<2.2
 onnx
+omegaconf
 # Vision stack
 opencv-python
 albumentations

@@ -1,4 +1,4 @@
-# CleanLaMa – Minimal LaMa Training & Inference
+# Inpaint – Minimal LaMa Training & Inference
 
 A lightweight wrapper around the original [LaMa](https://github.com/advimman/lama) implementation that keeps **only what you need**:
 
@@ -38,7 +38,7 @@ Run any sub-command with `-h` for detailed options.
 
 ### Folder layout
 ```
-cleanlama/          # minimal CLI implementation (train / infer / onnx)
+inpaint/            # package: cli, tasks, models alias
 configs/            # original YAML configs (feel free to prune further)
 requirements.txt    # trimmed dependencies
 README.md           # this file
