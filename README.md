@@ -19,17 +19,17 @@ pip install -r requirements.txt
 
 ```bash
 # Train (writes to ./experiments/<timestamp>)
-python -m src train --config configs/training/lama-fourier.yaml --gpus 1
+python -m inpaint train --config configs/training/lama-fourier.yaml --gpus 1
 
 # Watch training
 tensorboard --logdir experiments
 
 # Inference
-python -m src infer --checkpoint_dir ./experiments/20240101_123456 \
+python -m inpaint infer --checkpoint_dir ./experiments/20240101_123456 \
                        --input_dir ./demo_images --output_dir ./output
 
 # ONNX export
-python -m src onnx --checkpoint_dir ./experiments/20240101_123456 \
+python -m inpaint onnx --checkpoint_dir ./experiments/20240101_123456 \
                         --output model.onnx
 ```
 

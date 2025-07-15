@@ -17,4 +17,5 @@ webdataset
 packaging
 wldhx.yadisk-direct
 onnx
+click
 scikit-learn==0.24.2
