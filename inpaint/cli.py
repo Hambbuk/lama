@@ -1,9 +1,5 @@
 import click
 
-from inpaint.tasks import train as train_task
-from inpaint.tasks import infer as infer_task
-from inpaint.tasks import export_onnx as onnx_task
-
 @click.group()
 def main():
     """Inpainting toolkit: train / infer / onnx"""
