@@ -10,5 +10,17 @@ omegaconf
 # Vision stack
 opencv-python
 albumentations
+# additional libs required by original LaMa code
+easydict
+hydra-core>=1.1
+scikit-image
+scikit-learn
+joblib
+matplotlib
+pandas
+kornia
+webdataset
+tabulate
+lpips
 # Alias utils rely on packaging, omegaconf comes via lightning
 packaging
