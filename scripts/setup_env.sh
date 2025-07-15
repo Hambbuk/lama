@@ -35,6 +35,21 @@ log "Python: $(python -V)"
 
 python -m pip install --upgrade pip wheel --quiet --progress-bar off
 
+# simple retry wrapper for flaky networks
+pip_retry() {
+  local n=0
+  until python -m pip install --quiet --progress-bar off "$@" && break; do
+    n=$((n+1))
+    [ $n -lt 5 ] || { echo "[pip] failed after 5 attempts"; exit 1; }
+    echo "[pip] retry $n…" && sleep 4
+  done
+}
+
+# Windows path: force known CUDA tag when uname says MINGW/MSYS
+case "$(uname -s)" in
+  MINGW*|MSYS*) TAG=${CUDA_TAG:-cu118};;
+esac
+
 # 2 ─ pick torch wheel tag --------------------------------------------------
 TAG=cpu
 if command -v nvidia-smi &>/dev/null; then
@@ -44,7 +59,7 @@ if command -v nvidia-smi &>/dev/null; then
 fi
 if ! python -m pip install --quiet --progress-bar off torch torchvision --extra-index-url "$TORCH_REPO/$TAG"; then
   log "Wheel for $TAG not found → installing CPU build"
-  python -m pip install --quiet --progress-bar off torch torchvision --extra-index-url "$TORCH_REPO/cpu"
+  pip_retry torch torchvision --extra-index-url "$TORCH_REPO/cpu"
 fi
 
 # 3 ─ project deps ----------------------------------------------------------

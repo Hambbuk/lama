@@ -8,6 +8,9 @@ A lightweight wrapper around the original [LaMa](https://github.com/advimman/lam
 
 ---
 
+## 0. Try on Colab  
+[![Run in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/<org>/lama/blob/main/examples/quickstart.ipynb)
+
 ## 1. Installation
 ```bash
 # one-liner (detects GPU & sets up env automatically)
@@ -45,3 +48,9 @@ README.md           # this file
 ```
 
 Everything else from the original repo can be ignored or deleted if you wish – the wrappers dynamically import only the modules they need.
+
+### FAQ
+| Question | Answer |
+|----------|--------|
+| ModuleNotFoundError: models.ade20k | The stub lives in `inpaint/models/ade20k`. Ensure you didn't delete it and that you ran `bash scripts/setup_env.sh` which installs minimal stubs. |
+| GPU driver newer than official wheel | Override with `CUDA_TAG=cu124 bash scripts/setup_env.sh` or fall back to CPU build automatically. |
