@@ -1,0 +1,8 @@
+defaults:
+  - training: lama_small_train_masks
+
+# Output directory can be overridden via CLI
+out_dir: ./runs
+
+trainer:
+  max_epochs: 1  # default, overrideable via CLI
