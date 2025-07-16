@@ -1,0 +1,107 @@
+run_title: 'lama-default'
+
+training_model:
+  kind: default
+  visualize_each_iters: 1000
+  concat_mask: true
+  store_discr_outputs_for_vis: true
+
+losses:
+  l1:
+    weight_missing: 0
+    weight_known: 10
+  perceptual:
+    weight: 0
+  adversarial:
+    kind: r1
+    weight: 10
+    gp_coef: 0.001
+    mask_as_fake_target: true
+    allow_scale_mask: true
+  feature_matching:
+    weight: 100
+  resnet_pl:
+    weight: 30
+    weights_path: ${env:TORCH_HOME}
+
+generator:
+  kind: ffc_resnet
+  input_nc: 4
+  output_nc: 3
+  ngf: 64
+  n_downsampling: 3
+  n_blocks: 9
+  add_out_act: sigmoid
+  init_conv_kwargs:
+    ratio_gin: 0
+    ratio_gout: 0
+    enable_lfu: false
+  downsample_conv_kwargs:
+    ratio_gin: ${generator.init_conv_kwargs.ratio_gout}
+    ratio_gout: ${generator.downsample_conv_kwargs.ratio_gin}
+    enable_lfu: false
+  resnet_conv_kwargs:
+    ratio_gin: 0.75
+    ratio_gout: ${generator.resnet_conv_kwargs.ratio_gin}
+    enable_lfu: false
+
+discriminator:
+  kind: pix2pixhd_nlayer
+  input_nc: 3
+  n_layers: 4
+  ndf: 64
+  max_features: 512
+  norm_layer: instance
+  activation: lrelu_01
+
+data:
+  train:
+    kind: default
+    path: /path/to/train/dataset
+    dataloader:
+      batch_size: 8
+      shuffle: true
+      num_workers: 4
+  val:
+    kind: default
+    path: /path/to/val/dataset
+    dataloader:
+      batch_size: 8
+      shuffle: false
+      num_workers: 4
+
+optimizers:
+  generator:
+    kind: adam
+    lr: 0.001
+    betas: [0.9, 0.999]
+    weight_decay: 0.0
+  discriminator:
+    kind: adam
+    lr: 0.0001
+    betas: [0.9, 0.999]
+    weight_decay: 0.0
+
+trainer:
+  kwargs:
+    max_epochs: 100
+    gpus: 1
+    precision: 16
+    gradient_clip_val: 1.0
+    check_val_every_n_epoch: 1
+    log_every_n_steps: 50
+  checkpoint_kwargs:
+    save_top_k: 3
+    monitor: val_loss
+    mode: min
+    save_last: true
+
+visualizer:
+  kind: directory
+  outdir: ./outputs/visualizations
+  max_items: 10
+
+location:
+  data_root_dir: /path/to/data
+  out_root_dir: ./outputs
+  tb_dir: ./tb_logs
