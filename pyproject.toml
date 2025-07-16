@@ -1,0 +1,32 @@
+[build-system]
+requires = [
+    "setuptools>=61.0",
+    "wheel",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lama"
+version = "0.1.0"
+description = "LaMa inpainting refactored package"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+]
+authors = [
+    {name = "LaMa Contributors", email = ""},
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[project.optional-dependencies]
+develop = [
+    "pytorch-lightning",
+    "hydra-core",
+    "omegaconf",
+    "torch",
+    "torchvision",
+]
