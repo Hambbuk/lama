@@ -5,7 +5,7 @@ Training script for LaMa inpainting model using PyTorch Lightning and Hydra
 import os
 import hydra
 import pytorch_lightning as pl
-from pytorch_lightning.loggers import WandbLogger, TensorBoardLogger
+from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping, LearningRateMonitor
 from omegaconf import DictConfig, OmegaConf
 import torch
@@ -38,21 +38,12 @@ def train(cfg: DictConfig):
     # Setup logger
     logger = None
     if 'logger' in cfg and cfg.logger is not None:
-        if cfg.logger.get('type') == 'wandb':
-            logger = WandbLogger(
-                project=cfg.logger.get('project', 'lama-inpainting'),
-                name=cfg.experiment_name,
-                save_dir=cfg.output_dir,
-                tags=cfg.logger.get('tags', []),
-                notes=cfg.logger.get('notes', ''),
-                config=OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
-            )
-        elif cfg.logger.get('type') == 'tensorboard':
+        if cfg.logger.get('type') == 'tensorboard':
             logger = TensorBoardLogger(
                 save_dir=cfg.output_dir,
                 name=cfg.experiment_name
             )
-        print(f"Using {cfg.logger.type} logger")
+            print(f"Using {cfg.logger.type} logger")
     
     # Setup callbacks
     callbacks = []

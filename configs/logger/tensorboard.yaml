@@ -1,0 +1,8 @@
+# TensorBoard logger configuration
+type: tensorboard
+save_dir: ./logs
+name: lama_inpainting
+version: null
+log_graph: false
+default_hp_metric: true
+prefix: ""

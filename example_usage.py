@@ -128,7 +128,7 @@ def show_project_structure():
 │   ├── data/               # Data configs  
 │   │   └── places365.yaml  # Places365 dataset
 │   └── logger/             # Logger configs
-│       └── wandb.yaml      # WandB logger
+│       └── tensorboard.yaml # TensorBoard logger
 ├── src/                    # Source code
 │   ├── models/             # Model implementations
 │   ├── losses/             # Loss functions

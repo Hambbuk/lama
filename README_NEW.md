@@ -10,7 +10,7 @@ Lama 인페인팅 모델을 PyTorch Lightning과 Hydra를 사용하여 현대적
 - **모듈화된 구조**: Generator, Discriminator, Loss 함수들을 독립적으로 구성
 - **다양한 마스크 타입**: Random, Irregular, Outpainting 마스크 지원
 - **현대적 패키지**: 최신 torch, torchvision, albumentations 등 사용
-- **WandB 연동**: 실험 추적 및 시각화
+- **TensorBoard 연동**: 실험 추적 및 시각화
 
 ## 📁 프로젝트 구조
 
@@ -173,12 +173,11 @@ mask_config:
 
 ## 📊 모니터링
 
-### WandB 사용
+### TensorBoard 사용
 
-```yaml
-# configs/logger/wandb.yaml 수정
-entity: your_wandb_username
-project: your_project_name
+```bash
+# TensorBoard 실행
+tensorboard --logdir logs/
 ```
 
 학습 중 다음을 모니터링할 수 있습니다:
@@ -187,12 +186,7 @@ project: your_project_name
 - 생성된 이미지 샘플
 - PSNR, SSIM 등 메트릭
 
-### TensorBoard 사용
-
-```bash
-# TensorBoard 실행
-tensorboard --logdir outputs/
-```
+TensorBoard는 기본적으로 `./logs` 폴더에 로그를 저장합니다.
 
 ## 🔧 커스터마이징
 

@@ -9,7 +9,6 @@ from torch.optim import Adam, AdamW
 from torch.optim.lr_scheduler import StepLR, CosineAnnealingLR, ReduceLROnPlateau
 from typing import Any, Dict, List, Optional, Tuple, Union
 import torchmetrics
-import wandb
 
 from models.generator import get_generator
 from models.discriminator import get_discriminator
@@ -301,8 +300,8 @@ class InpaintingLightningModule(pl.LightningModule):
         return self.validation_step(batch, batch_idx)
         
     def _log_images(self, real: torch.Tensor, mask: torch.Tensor, fake: torch.Tensor, stage: str):
-        """Log sample images to wandb"""
-        if isinstance(self.logger, pl.loggers.WandbLogger):
+        """Log sample images to TensorBoard"""
+        if hasattr(self.logger, 'experiment'):
             # Take first 4 images from batch
             n_samples = min(4, real.size(0))
             
@@ -314,16 +313,15 @@ class InpaintingLightningModule(pl.LightningModule):
             # Create masked images for visualization
             masked_images = real_denorm * (1 - mask_viz)
             
-            # Create grid
-            images = []
-            for i in range(n_samples):
-                images.extend([
-                    wandb.Image(real_denorm[i], caption=f"{stage}_real_{i}"),
-                    wandb.Image(masked_images[i], caption=f"{stage}_masked_{i}"),
-                    wandb.Image(fake_denorm[i], caption=f"{stage}_fake_{i}"),
-                ])
-                
-            self.logger.experiment.log({f"{stage}_images": images})
+            # Create grid for TensorBoard
+            from torchvision.utils import make_grid
+            
+            # Stack images horizontally: real, masked, fake
+            grid_images = torch.cat([real_denorm, masked_images, fake_denorm], dim=0)
+            grid = make_grid(grid_images, nrow=n_samples, normalize=False, range=(0, 1))
+            
+            # Log to tensorboard
+            self.logger.experiment.add_image(f"{stage}_images", grid, self.global_step)
             
     def on_train_epoch_end(self):
         """End of training epoch"""
