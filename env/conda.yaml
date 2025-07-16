@@ -1,0 +1,12 @@
+name: lama
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pytorch=2.1.1
+  - cudatoolkit=12.1
+  - pip
+  - pip:
+    - -r requirements.txt
