@@ -3,10 +3,24 @@ Training script for LaMa inpainting model using PyTorch Lightning and Hydra
 """
 
 import os
+# Disable wandb to avoid import issues
+os.environ['WANDB_MODE'] = 'disabled'
+os.environ['WANDB_DISABLED'] = 'true'
+
 import hydra
-import pytorch_lightning as pl
-from pytorch_lightning.loggers import TensorBoardLogger
-from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping, LearningRateMonitor
+try:
+    import pytorch_lightning as pl
+    from pytorch_lightning.loggers import TensorBoardLogger
+    from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping, LearningRateMonitor
+except ImportError as e:
+    print(f"❌ PyTorch Lightning import error: {e}")
+    print("🔧 Try one of these solutions:")
+    print("1. pip install wandb")
+    print("2. pip install pytorch-lightning==1.9.0")
+    print("3. pip install lightning (instead of pytorch-lightning)")
+    print("4. python setup_fix.py")
+    exit(1)
+
 from omegaconf import DictConfig, OmegaConf
 import torch
 

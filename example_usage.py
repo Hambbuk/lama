@@ -50,6 +50,12 @@ def quick_start_example():
     print("🚀 LaMa Inpainting Quick Start Example")
     print("=" * 50)
     
+    # 0. Environment setup
+    print("0. Environment setup (if you encounter WandB errors):")
+    print("   python startup.py")
+    print("   # or simply: pip install wandb")
+    print()
+    
     # 1. Training command
     print("1. Training your model:")
     print("   python train.py data_dir=/path/to/your/dataset")

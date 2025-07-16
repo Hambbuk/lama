@@ -45,8 +45,20 @@ source lama_env/bin/activate  # Linux/Mac
 # 또는
 lama_env\Scripts\activate     # Windows
 
-# 패키지 설치
+# 자동 환경 설정 (권장)
+python startup.py
+
+# 또는 수동 설치
 pip install -r requirements.txt
+```
+
+**⚠️ PyTorch Lightning WandB 오류 해결:**
+```bash
+# 가장 간단한 해결책
+pip install wandb
+
+# 또는 자동 설정 스크립트 실행
+python startup.py
 ```
 
 ### 2. 데이터 준비
@@ -211,17 +223,33 @@ TensorBoard는 기본적으로 `./logs` 폴더에 로그를 저장합니다.
 
 ### 일반적인 문제들
 
-1. **CUDA 메모리 부족**
+1. **WandB import 오류 (wandb has no apis)**
+   ```bash
+   # 해결 방법 1: WandB 설치 (권장)
+   pip install wandb
+   
+   # 해결 방법 2: 이전 버전 사용
+   pip install pytorch-lightning==1.9.0
+   
+   # 해결 방법 3: lightning 패키지 사용
+   pip uninstall pytorch-lightning
+   pip install lightning
+   
+   # 해결 방법 4: 자동 수정 스크립트 실행
+   python setup_fix.py
+   ```
+
+2. **CUDA 메모리 부족**
    ```bash
    python train.py data.batch_size=2 trainer.precision=16
    ```
 
-2. **데이터 로딩 속도 느림**
+3. **데이터 로딩 속도 느림**
    ```bash
    python train.py data.num_workers=8
    ```
 
-3. **학습 불안정**
+4. **학습 불안정**
    ```bash
    python train.py model.loss_config.adversarial_weight=0.05
    ```
