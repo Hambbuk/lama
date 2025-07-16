@@ -13,5 +13,9 @@ _MAP = {
 }
 
 for _old, _new in _MAP.items():
-    if _old not in sys.modules:  # avoid overriding if already imported
-        sys.modules[_old] = importlib.import_module(_new)
+    try:
+        if _old not in sys.modules:
+            sys.modules[_old] = importlib.import_module(_new)
+    except ModuleNotFoundError:
+        # Skip alias if new module relies on heavy optional deps not installed.
+        pass
