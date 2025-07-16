@@ -1,3 +1,6 @@
+import sys, pathlib
+sys.path.append(str(pathlib.Path(__file__).resolve().parent.parent / "src"))
+
 import hydra
 import pytorch_lightning as pl
 from omegaconf import DictConfig
