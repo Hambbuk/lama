@@ -1,3 +1,16 @@
+## Quick Start (Refactored Version)
+
+Install editable package and run a short training run:
+
+```bash
+pip install -e .
+python scripts/train.py max_epochs=1
+```
+
+The refactored package follows a clean, role-based structure under `src/lama/` and exposes minimal runnable CLI utilities in `scripts/`.
+
+---
+
 # 🦙 LaMa: Resolution-robust Large Mask Inpainting with Fourier Convolutions
 
 by Roman Suvorov, Elizaveta Logacheva, Anton Mashikhin, 
