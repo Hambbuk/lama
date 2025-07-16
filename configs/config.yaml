@@ -1,0 +1,37 @@
+defaults:
+  - model: lama_ffc
+  - data: places365
+  - trainer: default
+  - optimizer: adam
+  - scheduler: cosine
+  - loss: lama_loss
+  - logger: wandb
+  - callbacks: default
+  - _self_
+
+# Experiment configuration
+experiment_name: lama_inpainting
+seed: 42
+
+# Training settings
+trainer:
+  max_epochs: 100
+  gpus: 1
+  precision: 16
+  gradient_clip_val: 0.5
+  accumulate_grad_batches: 1
+  check_val_every_n_epoch: 1
+  log_every_n_steps: 50
+
+# Paths
+data_dir: /path/to/your/dataset
+output_dir: ./outputs
+checkpoint_dir: ./checkpoints
+
+# Hydra settings
+hydra:
+  run:
+    dir: ${output_dir}/${experiment_name}/${now:%Y-%m-%d_%H-%M-%S}
+  sweep:
+    dir: ${output_dir}/${experiment_name}
+    subdir: ${hydra.job.num}

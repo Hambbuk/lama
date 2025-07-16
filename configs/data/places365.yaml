@@ -1,0 +1,31 @@
+# Places365 dataset configuration
+_target_: src.data.dataset.get_datamodule
+
+train_data_root: ${data_dir}/train
+val_data_root: ${data_dir}/val
+test_data_root: ${data_dir}/test
+
+image_size: 256
+load_size: 286  # Larger size for random crop augmentation
+batch_size: 4
+num_workers: 4
+pin_memory: true
+
+# Mask generation configuration
+mask_config:
+  types: ['random', 'irregular']
+  
+  # Random mask parameters
+  random_min_size: 0.02
+  random_max_size: 0.4
+  random_max_masks: 1
+  
+  # Irregular mask parameters
+  irregular_min_vertex: 4
+  irregular_max_vertex: 12
+  irregular_min_width: 10
+  irregular_max_width: 40
+  
+  # Outpainting mask parameters (if used)
+  outpainting_min_crop: 0.2
+  outpainting_max_crop: 0.8
