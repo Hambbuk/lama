@@ -8,6 +8,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from scipy.io import loadmat
 from torch.nn.modules import BatchNorm2d
+from urllib.request import urlretrieve
 
 from . import resnet
 from . import mobilenet
@@ -123,14 +124,21 @@ class ModelBuilder:
 
     @staticmethod
     def get_decoder(weights_path, arch_encoder, arch_decoder, fc_dim, drop_last_conv, *arts, **kwargs):
-        path = os.path.join(weights_path, 'ade20k', f'ade20k-{arch_encoder}-{arch_decoder}/decoder_epoch_20.pth')
+        rel_dir = f"ade20k-{arch_encoder}-{arch_decoder}"
+        path = os.path.join(weights_path, "ade20k", rel_dir, "decoder_epoch_20.pth")
+        if not os.path.exists(path):
+            url = f"{WEIGHTS_BASE_URL}/{rel_dir}/decoder_epoch_20.pth"
+            _download_if_missing(url, path)
         return ModelBuilder.build_decoder(arch=arch_decoder, fc_dim=fc_dim, weights=path, use_softmax=True, drop_last_conv=drop_last_conv)
 
     @staticmethod
-    def get_encoder(weights_path, arch_encoder, arch_decoder, fc_dim, segmentation,
-                    *arts, **kwargs):
+    def get_encoder(weights_path, arch_encoder, arch_decoder, fc_dim, segmentation, *arts, **kwargs):
         if segmentation:
-            path = os.path.join(weights_path, 'ade20k', f'ade20k-{arch_encoder}-{arch_decoder}/encoder_epoch_20.pth')
+            rel_dir = f"ade20k-{arch_encoder}-{arch_decoder}"
+            path = os.path.join(weights_path, "ade20k", rel_dir, "encoder_epoch_20.pth")
+            if not os.path.exists(path):
+                url = f"{WEIGHTS_BASE_URL}/{rel_dir}/encoder_epoch_20.pth"
+                _download_if_missing(url, path)
         else:
             path = ''
         return ModelBuilder.build_encoder(arch=arch_encoder, fc_dim=fc_dim, weights=path)
@@ -625,3 +633,19 @@ class PPM(nn.Module):
         else:
             x = nn.functional.log_softmax(x, dim=1)
         return x
+
+
+WEIGHTS_BASE_URL = "http://sceneparsing.csail.mit.edu/model/pytorch"
+
+def _download_if_missing(url: str, dest_path: str):
+    """Download a file from `url` to `dest_path` if it does not already exist."""
+    if os.path.exists(dest_path):
+        return
+    os.makedirs(os.path.dirname(dest_path), exist_ok=True)
+    print(f"[LaMa] Pre-trained weights not found. Downloading\n  url:  {url}\n  dest: {dest_path}")
+    try:
+        urlretrieve(url, dest_path)
+        print("[LaMa] Download complete.")
+    except Exception as exc:
+        print(f"[LaMa] Failed to download {url}: {exc}")
+        raise
