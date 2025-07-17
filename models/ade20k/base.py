@@ -131,8 +131,8 @@ class ModelBuilder:
         rel_dir = f"ade20k-{arch_encoder}-{arch_decoder}"
         path = os.path.join(weights_path, "ade20k", rel_dir, "decoder_epoch_20.pth")
         if not os.path.exists(path):
-            url = f"{WEIGHTS_BASE_URL}/{rel_dir}/decoder_epoch_20.pth"
-            _download_if_missing(url, path)
+            rel_path = f"{rel_dir}/decoder_epoch_20.pth"
+            _download_if_missing(rel_path, path)
         return ModelBuilder.build_decoder(arch=arch_decoder, fc_dim=fc_dim, weights=path, use_softmax=True, drop_last_conv=drop_last_conv)
 
     @staticmethod
@@ -141,8 +141,8 @@ class ModelBuilder:
             rel_dir = f"ade20k-{arch_encoder}-{arch_decoder}"
             path = os.path.join(weights_path, "ade20k", rel_dir, "encoder_epoch_20.pth")
             if not os.path.exists(path):
-                url = f"{WEIGHTS_BASE_URL}/{rel_dir}/encoder_epoch_20.pth"
-                _download_if_missing(url, path)
+                rel_path = f"{rel_dir}/encoder_epoch_20.pth"
+                _download_if_missing(rel_path, path)
         else:
             path = ''
         return ModelBuilder.build_encoder(arch=arch_encoder, fc_dim=fc_dim, weights=path)
@@ -639,40 +639,45 @@ class PPM(nn.Module):
         return x
 
 
-# Primary & mirror locations (KR mirror optional)
+# Primary & optional mirror locations
 _PRIMARY_URL = "http://sceneparsing.csail.mit.edu/model/pytorch"
-# You can set LAMA_ADE_MIRROR to e.g. "https://huggingface.co/aml-lab/ade20k-weights/resolve/main"
+# Set env LAMA_ADE_MIRROR to use local/HF mirror
 _ENV_MIRROR = os.getenv("LAMA_ADE_MIRROR")
-WEIGHTS_BASE_URLS = [_ENV_MIRROR, _PRIMARY_URL] if _ENV_MIRROR else [_PRIMARY_URL]
+WEIGHTS_BASE_URLS = ([_ENV_MIRROR] if _ENV_MIRROR else []) + [_PRIMARY_URL]
 
-def _download_if_missing(url: str, dest_path: str):
-    """Download a file from `url` to `dest_path` if it does not already exist."""
+def _download_if_missing(relative_path: str, dest_path: str):
+    """Download `relative_path` from the first reachable mirror into `dest_path`."""
     if os.path.exists(dest_path):
         return
+
     os.makedirs(os.path.dirname(dest_path), exist_ok=True)
-    print(f"[LaMa] Pre-trained weights not found. Downloading\n  url:  {url}\n  dest: {dest_path}")
-    try:
-        # Try mirrors in order
-        for base in WEIGHTS_BASE_URLS:
-            url = f"{base}/{os.path.basename(dest_path).replace('encoder_epoch_20.pth','').replace('decoder_epoch_20.pth','')}{os.path.basename(dest_path)}" if base!=_PRIMARY_URL else url
-        req = Request(url, headers={"User-Agent": "Mozilla/5.0"})
-        with urlopen(req) as resp, open(dest_path, "wb") as f:
-            total_size = int(resp.headers.get("Content-Length", 0))
-            chunk_size = 8192
-            with tqdm(
-                total=total_size,
-                unit="B",
-                unit_scale=True,
-                unit_divisor=1024,
-                desc=f"[LaMa] {os.path.basename(dest_path)}",
-            ) as pbar:
-                while True:
-                    chunk = resp.read(chunk_size)
-                    if not chunk:
-                        break
-                    f.write(chunk)
-                    pbar.update(len(chunk))
-        print("[LaMa] Download complete.")
-    except Exception as exc:
-        print(f"[LaMa] Failed to download {url}: {exc}")
-        raise
+
+    last_exc = None
+    for base in WEIGHTS_BASE_URLS:
+        url = f"{base}/{relative_path}"
+        try:
+            print(f"[LaMa] Downloading {url} -> {dest_path}")
+            req = Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            with urlopen(req) as resp, open(dest_path, "wb") as f:
+                total_size = int(resp.headers.get("Content-Length", 0))
+                chunk_size = 8192
+                with tqdm(
+                    total=total_size,
+                    unit="B",
+                    unit_scale=True,
+                    unit_divisor=1024,
+                    desc=f"[LaMa] {os.path.basename(dest_path)}",
+                ) as pbar:
+                    while True:
+                        chunk = resp.read(chunk_size)
+                        if not chunk:
+                            break
+                        f.write(chunk)
+                        pbar.update(len(chunk))
+            print("[LaMa] Download complete.")
+            return
+        except Exception as exc:
+            print(f"[LaMa] Mirror failed: {url} ({exc})")
+            last_exc = exc
+
+    raise RuntimeError(f"[LaMa] All mirrors failed to download {relative_path}: {last_exc}")
