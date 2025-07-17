@@ -1,5 +1,11 @@
 # 🦙 LaMa: Resolution-robust Large Mask Inpainting with Fourier Convolutions
 
+```bash
+pip install -r requirements.txt
+pip install -e .
+python scripts/train.py model=small trainer.max_epochs=1 out_dir=./runs
+```
+
 by Roman Suvorov, Elizaveta Logacheva, Anton Mashikhin, 
 Anastasia Remizova, Arsenii Ashukha, Aleksei Silvestrov, Naejin Kong, Harshith Goka, Kiwoong Park, Victor Lempitsky.
 
