@@ -639,7 +639,11 @@ class PPM(nn.Module):
         return x
 
 
-WEIGHTS_BASE_URL = "http://sceneparsing.csail.mit.edu/model/pytorch"
+# Primary & mirror locations (KR mirror optional)
+_PRIMARY_URL = "http://sceneparsing.csail.mit.edu/model/pytorch"
+# You can set LAMA_ADE_MIRROR to e.g. "https://huggingface.co/aml-lab/ade20k-weights/resolve/main"
+_ENV_MIRROR = os.getenv("LAMA_ADE_MIRROR")
+WEIGHTS_BASE_URLS = [_ENV_MIRROR, _PRIMARY_URL] if _ENV_MIRROR else [_PRIMARY_URL]
 
 def _download_if_missing(url: str, dest_path: str):
     """Download a file from `url` to `dest_path` if it does not already exist."""
@@ -648,7 +652,9 @@ def _download_if_missing(url: str, dest_path: str):
     os.makedirs(os.path.dirname(dest_path), exist_ok=True)
     print(f"[LaMa] Pre-trained weights not found. Downloading\n  url:  {url}\n  dest: {dest_path}")
     try:
-        # User-Agent avoids some servers blocking the request
+        # Try mirrors in order
+        for base in WEIGHTS_BASE_URLS:
+            url = f"{base}/{os.path.basename(dest_path).replace('encoder_epoch_20.pth','').replace('decoder_epoch_20.pth','')}{os.path.basename(dest_path)}" if base!=_PRIMARY_URL else url
         req = Request(url, headers={"User-Agent": "Mozilla/5.0"})
         with urlopen(req) as resp, open(dest_path, "wb") as f:
             total_size = int(resp.headers.get("Content-Length", 0))
