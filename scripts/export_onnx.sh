@@ -7,7 +7,7 @@ set -euo pipefail
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PROJECT_ROOT="$( realpath "$SCRIPT_DIR/.." )"
 
-export TORCH_HOME="${TORCH_HOME:-$PROJECT_ROOT/weights}"
+export TORCH_HOME="${TORCH_HOME:-$PROJECT_ROOT/pretrained}"
 mkdir -p "$TORCH_HOME"
 export PYTHONPATH="${PYTHONPATH:-$PROJECT_ROOT}"
 
