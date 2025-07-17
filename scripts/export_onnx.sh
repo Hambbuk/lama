@@ -7,8 +7,7 @@ set -euo pipefail
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PROJECT_ROOT="$( realpath "$SCRIPT_DIR/.." )"
 
-DEFAULT_CACHE_ROOT="${XDG_CACHE_HOME:-$HOME/.cache}"
-export TORCH_HOME="${TORCH_HOME:-$DEFAULT_CACHE_ROOT/lama}"
+export TORCH_HOME="${TORCH_HOME:-$PROJECT_ROOT/.cache/lama}"
 mkdir -p "$TORCH_HOME"
 export PYTHONPATH="${PYTHONPATH:-$PROJECT_ROOT}"
 
