@@ -10,7 +10,6 @@ from scipy.io import loadmat
 from torch.nn.modules import BatchNorm2d
 # standard libs
 from urllib.request import urlopen, Request
-import shutil
 
 # Third-party
 from tqdm.auto import tqdm
@@ -649,16 +648,24 @@ def _download_if_missing(url: str, dest_path: str):
     os.makedirs(os.path.dirname(dest_path), exist_ok=True)
     print(f"[LaMa] Pre-trained weights not found. Downloading\n  url:  {url}\n  dest: {dest_path}")
     try:
-        # Use urlopen to get the response and Request to add headers for tqdm
-        req = Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-        response = urlopen(req)
-        total_size = int(response.headers.get('Content-Length', 0))
-
-        with tqdm(total=total_size, unit='B', unit_scale=True, desc=f"[LaMa] Downloading {url.split('/')[-1]}") as pbar:
-            with open(dest_path, 'wb') as f:
-                for data in response.iter_content(chunk_size=1024):
-                    size = f.write(data)
-                    pbar.update(size)
+        # User-Agent avoids some servers blocking the request
+        req = Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urlopen(req) as resp, open(dest_path, "wb") as f:
+            total_size = int(resp.headers.get("Content-Length", 0))
+            chunk_size = 8192
+            with tqdm(
+                total=total_size,
+                unit="B",
+                unit_scale=True,
+                unit_divisor=1024,
+                desc=f"[LaMa] {os.path.basename(dest_path)}",
+            ) as pbar:
+                while True:
+                    chunk = resp.read(chunk_size)
+                    if not chunk:
+                        break
+                    f.write(chunk)
+                    pbar.update(len(chunk))
         print("[LaMa] Download complete.")
     except Exception as exc:
         print(f"[LaMa] Failed to download {url}: {exc}")
