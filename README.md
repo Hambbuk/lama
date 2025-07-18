@@ -4,10 +4,10 @@ This is a **minimal guide** for training, testing, and exporting the LaMa-based 
 
 ---
 
-## 1. Install Requirements (Conda + `conda_env.yml`)
+## 1. Install Requirements (Python 3.10, Conda + `conda_env.yml`)
 ```bash
-# 1) create the env from the YAML (Python 3.8–3.10 compatible)
-conda env create -f conda_env.yml   # default name: lama
+# 1) create the environment from the YAML (fixed to Python 3.10)
+conda env create -f conda_env.yml   # env name defaults to "lama"
 
 # 2) activate
 conda activate lama
@@ -21,7 +21,7 @@ python -m pip install --upgrade pip
 #    pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118   # CUDA 11.8 example
 ```
 
-**Running on cloud GPUs (e.g. Paperspace, Kaggle, HF Spaces)**
+**Running on cloud GPUs (e.g. Paperspace, Kaggle, HuggingFace Spaces)**
 1. Make sure the base image has CUDA drivers that match the wheel in `conda_env.yml` (CUDA 11.8 by default).
 2. In Spaces / Docker, call the same two commands:
    ```bash
