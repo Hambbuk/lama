@@ -4,34 +4,27 @@ This is a **minimal guide** for training, testing, and exporting the LaMa-based 
 
 ---
 
-## 1. Install Requirements (Python 3.10, Conda + `conda_env.yml`)
+## 1. Install Requirements (Python 3.10 + pip)
 ```bash
-# 1) create the environment from the YAML (fixed to Python 3.10)
-conda env create -f conda_env.yml   # env name defaults to "lama"
+# 1) ensure Python 3.10 is active (e.g. via pyenv or system installation)
+python --version  # → 3.10.x
 
-# 2) activate
-conda activate lama
+# 2) create an optional virtual environment
+python -m venv venv && source venv/bin/activate
 
-# 3) (optional) upgrade pip & install extras
+# 3) install all Python packages
 python -m pip install --upgrade pip
-# pip install -r requirements.txt    # only if you modified the YAML
+pip install -r requirements.txt
 
-# 4) GPU users – switch the PyTorch wheel if necessary:
+# 4) GPU users – swap in a CUDA-enabled PyTorch wheel if needed:
 #    pip uninstall -y torch torchvision
-#    pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118   # CUDA 11.8 example
+#    # CUDA 11.8 example
+#    pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
 ```
 
-**Running on cloud GPUs (e.g. Paperspace, Kaggle, HuggingFace Spaces)**
-1. Make sure the base image has CUDA drivers that match the wheel in `conda_env.yml` (CUDA 11.8 by default).
-2. In Spaces / Docker, call the same two commands:
-   ```bash
-   conda env create -f conda_env.yml && conda activate lama
-   ```
-3. If conda is unavailable, fall back to:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
+**Cloud GPUs (Paperspace, Kaggle, HF Spaces)**
+1. The base image must have NVIDIA drivers compatible with CUDA 11.8 (or 12.1 if you install that wheel).
+2. Run the same `pip install -r requirements.txt` inside your workspace/ container.
 ---
 
 ## 2. Prepare the Dataset
