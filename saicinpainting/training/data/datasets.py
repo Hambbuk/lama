@@ -341,14 +341,19 @@ def make_default_train_dataloader(indir, kind='default', out_size=512, mask_gen_
             # Derive hand-mask dirs automatically
             hand_mask_dirs = [None] * len(indir)
 
+        # Extract parameters relevant for HandInpaintingTrainDataset and ignore the rest
+        mask_inflation = kwargs.get('mask_inflation')
+
         subdatasets = []
         for rgb_dir, mask_dir in zip(indir, hand_mask_dirs):
             subdatasets.append(
-                HandInpaintingTrainDataset(indir=rgb_dir,
-                                           hand_mask_dir=mask_dir,
-                                           mask_generator=mask_generator,
-                                           transform=transform,
-                                           **kwargs)
+                HandInpaintingTrainDataset(
+                    indir=rgb_dir,
+                    hand_mask_dir=mask_dir,
+                    mask_generator=mask_generator,
+                    transform=transform,
+                    mask_inflation=mask_inflation,
+                )
             )
 
         dataset = ConcatDataset(subdatasets)
