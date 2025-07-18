@@ -24,3 +24,28 @@ torchvision>=0.15
 onnx>=1.15
 onnx-simplifier>=0.4.33
 onnxruntime-gpu # fallback to onnxruntime if no GPU
+# Extra packages to match conda_env.yml (Python 3.8–3.10)
+absl-py
+aiohttp
+antlr4-python3-runtime
+async-timeout
+attrs
+braceexpand
+cachetools
+google-auth
+google-auth-oauthlib
+grpcio
+imageio
+importlib-metadata
+importlib-resources
+markdown
+opencv-python-headless
+pillow
+protobuf
+pytz
+six
+shapely
+tensorboard
+typing-extensions
+urllib3
+yarl
