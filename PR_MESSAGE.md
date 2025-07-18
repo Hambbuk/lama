@@ -1,64 +1,58 @@
-# Pull Request – Thumbnail Inpainting Refactor / NPU Support
+# PR – 썸네일 인페인팅 리팩터 & NPU 지원
 
-## Overview
-This PR modernises and streamlines our fork of **LaMa** for thumbnail inpainting, adds hand-mask training support, and introduces NPU-friendly tensor helpers.
+## 개요
+원본 **LaMa** 레포를 기반으로 썸네일 인페인팅 워크플로를 심플하게 재구성하고,
+• 손(Hand) 마스크를 활용한 학습 파이프라인 추가  
+• Verisilicon **VIPNano-Ql.7120** NPU 변환 오류를 해결하기 위한 커스텀 텐서 헬퍼 도입  
+• ONNX 내보내기 및 테스트 유틸 추가  
+등을 포함합니다.
 
-## Key Points
-1. **Repository baseline**
-   * Forked from the official LaMa repo (<https://github.com/advimman/lama>).
-   * ONNX export logic inspired by the Carve-Photos fork (<https://github.com/Carve-Photos/lama>).
-2. **Hand-mask training**  
-   Contributed by **@dohoon19-kim** – training pipeline can now exclude hand regions by providing `train_hand_mask/` PNGs and setting `kind: hand_mask[_multi]` in the data config.
-3. **NPU conversion fixes**  
-   Running PyTorch → Verisilicon **VIPNano-Ql.7120** NPU revealed that ops such as `torch.flip`, `torch.tensordot`, `torch.matmul` fail to convert.  We therefore added lightweight replacements in `saicinpainting/training/module/ffc.py`:
+## 주요 변경 사항
+1. **레포 베이스**  
+   - 원본 LaMa: <https://github.com/advimman/lama>  
+   - ONNX Export 참고: Carve-Photos 포크 <https://github.com/Carve-Photos/lama>
+
+2. **손 마스크 학습 지원**  
+   - **@dohoon19-kim** 님 기여.  
+   - `train_hand_mask/` PNG을 제공하고 `kind: hand_mask[_multi]` 로 설정하면 네트워크가 손 영역을 인페인트하지 않습니다.
+
+3. **NPU 변환 오류 패치**  
+   A311D · VIPNano 변환 시 `torch.flip`, `torch.tensordot`, `torch.matmul` 등이 실패하여
+   `saicinpainting/training/module/ffc.py` 에 다음과 같은 경량 구현을 추가했습니다.
 
 ```python
-"""
-Custom tensor helpers.
-Some PyTorch functions ('torch.flip', 'torch.tensordot', 'torch.matmul')
-are custom re-implementations because the native ops fail during
-A311D / VIPNano NPU conversion.
-"""
+"""커스텀 텐서 헬퍼 — PyTorch 기본 함수 대신 사용"""
 
-# ----------------------------------------------------------------------
+def flip_axis_static(x, axis):
+    dim = axis if axis >=0 else x.ndim + axis
+    rev = torch.arange(1, x.size(dim)-1, device=x.device).flip(0)
+    return x.index_select(dim, rev)
 
-def flip_axis_static(x: torch.Tensor, axis: int) -> torch.Tensor:
-    dim = axis if axis >= 0 else x.ndim + axis
-    rev_idx = torch.arange(1, x.size(dim) - 1, device=x.device).flip(0)
-    return x.index_select(dim, rev_idx)
-
-# ----------------------------------------------------------------------
-
-def matmul_linear(a: torch.Tensor, w: torch.Tensor) -> torch.Tensor:
-    if w.ndim != 2:
-        raise ValueError("`w` must be (K, N)")
-    vec = a.ndim == 1
-    a_ = a.unsqueeze(0) if vec else a
-    k, n = w.shape
-    out = F.linear(a_.reshape(-1, k), w.t()).reshape(*a_.shape[:-1], n)
-    return out.squeeze(0) if vec else out
-
-# ----------------------------------------------------------------------
-
-def tensordot_linear(a: torch.Tensor, b: torch.Tensor,
-                     dims: Union[int, Tuple[Sequence[int], Sequence[int]]] = 2) -> torch.Tensor:
-    # flatten-matmul-reshape workaround
-    ...
+# matmul / tensordot 는 F.linear 기반 구현 (코드 생략)
 ```
 
-4. **Project cleanup**
-   * Removed bloated conda exports – now Python **3.10** + `pip install -r requirements.txt` is enough.
-   * Added Bash helpers (`train.sh`, `inference.sh`, `export_to_onnx.sh`).
-   * Wrote a fresh minimal README.
+4. **프로젝트 정리**  
+   - Conda 의존 제거 → **Python 3.10 + `pip -r requirements.txt`** 만으로 설치.  
+   - Bash 스크립트(`train.sh`, `inference.sh`, `export_to_onnx.sh`, `onnx_inference.sh`) 추가.  
+   - README를 최소 가이드로 재작성.
 
-## How to test
+## 사용 방법
 ```bash
 python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
-./scripts/train.sh               # training from scratch
-./scripts/inference.sh -m <exp>  # sanity inference
-./scripts/export_to_onnx.sh -m <exp> -c last.ckpt -o model.onnx -s
+
+# 학습
+./scripts/train.sh
+
+# 추론
+./scripts/inference.sh -m experiments/<run>
+
+# ONNX 내보내기 + 간단 테스트
+./scripts/export_to_onnx.sh -m experiments/<run> -c best.ckpt -o lama.onnx -t
+./scripts/onnx_inference.sh -m lama.onnx
 ```
 
-## Acknowledgements
-Huge thanks to @dohoon19-kim for the hand-mask pipeline and to the original LaMa authors. Verisilicon support provided test hardware for the VIPNano-Ql.7120 NPU.
+## 감사의 글
+- 손 마스킹 파이프라인: **@dohoon19-kim**  
+- 원본 LaMa 팀 및 Carve-Photos 팀  
+- VIPNano-Ql.7120 NPU 테스트 장비 제공: **Verisilicon**
