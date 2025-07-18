@@ -4,20 +4,33 @@ This is a **minimal guide** for training, testing, and exporting the LaMa-based 
 
 ---
 
-## 1. Install Requirements with Conda (Python 3.8 – 3.10)
+## 1. Install Requirements (Conda + `conda_env.yml`)
 ```bash
-# 1) create and activate an isolated env (replace 3.10 with 3.8–3.10 as desired)
-conda create -n lama_py310 python=3.10 -y
-conda activate lama_py310
+# 1) create the env from the YAML (Python 3.8–3.10 compatible)
+conda env create -f conda_env.yml   # default name: lama
 
-# 2) upgrade pip (optional but recommended) and install deps
+# 2) activate
+conda activate lama
+
+# 3) (optional) upgrade pip & install extras
 python -m pip install --upgrade pip
-pip install -r requirements.txt
+# pip install -r requirements.txt    # only if you modified the YAML
 
-# 3) (GPU) if you need a CUDA-enabled PyTorch wheel:
+# 4) GPU users – switch the PyTorch wheel if necessary:
 #    pip uninstall -y torch torchvision
 #    pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118   # CUDA 11.8 example
 ```
+
+**Running on cloud GPUs (e.g. Paperspace, Kaggle, HF Spaces)**
+1. Make sure the base image has CUDA drivers that match the wheel in `conda_env.yml` (CUDA 11.8 by default).
+2. In Spaces / Docker, call the same two commands:
+   ```bash
+   conda env create -f conda_env.yml && conda activate lama
+   ```
+3. If conda is unavailable, fall back to:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
 ---
 
