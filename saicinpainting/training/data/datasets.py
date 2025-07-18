@@ -22,6 +22,105 @@ from saicinpainting.training.data.masks import get_mask_generator
 LOGGER = logging.getLogger(__name__)
 
 
+# -----------------------------------------------------------------------------
+# ✋ HandInpaintingTrainDataset — skips inpainting on hand regions
+# -----------------------------------------------------------------------------
+
+
+class HandInpaintingTrainDataset(Dataset):
+    """Training dataset that excludes hand regions specified by binary masks.
+
+    Each sample consists of an RGB thumbnail and a *single-channel* hand mask
+    (same spatial resolution).  A random inpainting mask is generated and then
+    multiplied by the inverse hand-mask so that the network never attempts to
+    inpaint hands.
+
+    Parameters
+    ----------
+    indir : str
+        Directory with RGB images (recursive glob on **/*.jpg).
+    hand_mask_dir : str or None, optional
+        Directory that keeps hand-mask PNGs with identical filenames. If
+        omitted, the code looks for a sibling directory named
+        ``<indir_parent>/train_hand_mask``.
+    mask_generator : callable
+        Function that produces random binary inpainting masks.
+    transform : albumentations.Compose
+        Data augmentation pipeline applied to both image & hand mask.
+    mask_inflation : int or None, optional
+        Number of pixels to dilate the hand mask before merging.  Use to add a
+        safety margin so the painted area never touches hands.
+    """
+
+    def __init__(self, indir, mask_generator, transform,
+                 hand_mask_dir=None, mask_inflation=None):
+        self.indir = indir
+        self.mask_generator = mask_generator
+        self.transform = transform
+        self.mask_inflation = mask_inflation
+
+        # Resolve hand-mask directory
+        if hand_mask_dir is None:
+            hand_mask_dir = os.path.join(os.path.dirname(indir), 'train_hand_mask')
+
+        assert os.path.isdir(hand_mask_dir), \
+            f"Hand-mask directory not found: {hand_mask_dir}"
+
+        # Build paired (img, mask) list
+        self.image_mask_pairs = []
+        for img_path in glob.glob(os.path.join(indir, '**', '*.jpg'), recursive=True):
+            base = os.path.splitext(os.path.basename(img_path))[0]
+            mask_path = os.path.join(hand_mask_dir, f"{base}.png")
+            if not os.path.exists(mask_path):
+                # Skip if corresponding mask is missing
+                continue
+            self.image_mask_pairs.append((img_path, mask_path))
+
+        LOGGER.info(f"HandInpaintingTrainDataset: {indir} → {len(self.image_mask_pairs)} paired samples")
+
+        # Counter for mask generator
+        self.iter_i = 0
+
+    def __len__(self):
+        return len(self.image_mask_pairs)
+
+    def __getitem__(self, idx):
+        img_path, hand_mask_path = self.image_mask_pairs[idx]
+
+        # RGB image ------------------------------------------------------------------
+        img = cv2.imread(img_path)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+        # Hand mask (grayscale) -------------------------------------------------------
+        hand_mask = cv2.imread(hand_mask_path, cv2.IMREAD_GRAYSCALE)
+
+        # Optional dilation to grow the hand region
+        if self.mask_inflation is not None and self.mask_inflation > 0:
+            kernel = cv2.getStructuringElement(cv2.MORPH_RECT,
+                                               (self.mask_inflation, self.mask_inflation))
+            hand_mask = cv2.dilate(hand_mask, kernel)
+
+        # Apply shared augmentations
+        transformed = self.transform(image=img, mask=hand_mask)
+        img = transformed['image']
+        hand_mask = transformed['mask']
+
+        # CHW & float32 ---------------------------------------------------------------
+        img = np.transpose(img, (2, 0, 1))           # C, H, W
+        hand_mask = hand_mask.astype(np.float32) / 255.0
+        hand_mask = np.expand_dims(hand_mask, axis=0)  # 1, H, W
+
+        # Generate random inpainting mask and zero-out hand region
+        rand_mask = self.mask_generator(img, iter_i=self.iter_i)
+        self.iter_i += 1
+        final_mask = rand_mask * (1.0 - hand_mask)
+
+        return {
+            'image': img,
+            'mask': final_mask,
+        }
+
+
 class InpaintingTrainDataset(Dataset):
     def __init__(self, indir, mask_generator, transform):
         self.in_files = list(glob.glob(os.path.join(indir, '**', '*.jpg'), recursive=True))
@@ -226,6 +325,33 @@ def make_default_train_dataloader(indir, kind='default', out_size=512, mask_gen_
                                          transform=transform,
                                          out_size=out_size,
                                          **kwargs)
+    elif kind == 'hand_mask':
+        dataset = HandInpaintingTrainDataset(indir=indir,
+                                             mask_generator=mask_generator,
+                                             transform=transform,
+                                             **kwargs)
+    elif kind == 'hand_mask_multi':
+        # Expect `indir` as a list/tuple and an optional matching list `hand_mask_dir` in kwargs
+        hand_mask_dirs = kwargs.pop('hand_mask_dir', None)
+
+        if hand_mask_dirs is not None:
+            assert len(indir) == len(hand_mask_dirs), \
+                "Length of indir and hand_mask_dir must match for hand_mask_multi"
+        else:
+            # Derive hand-mask dirs automatically
+            hand_mask_dirs = [None] * len(indir)
+
+        subdatasets = []
+        for rgb_dir, mask_dir in zip(indir, hand_mask_dirs):
+            subdatasets.append(
+                HandInpaintingTrainDataset(indir=rgb_dir,
+                                           hand_mask_dir=mask_dir,
+                                           mask_generator=mask_generator,
+                                           transform=transform,
+                                           **kwargs)
+            )
+
+        dataset = ConcatDataset(subdatasets)
     else:
         raise ValueError(f'Unknown train dataset kind {kind}')
 

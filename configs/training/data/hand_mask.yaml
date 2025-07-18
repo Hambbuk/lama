@@ -1,0 +1,71 @@
+# -----------------------------------------------------------------------------
+# hand_mask.yaml — Data config (256×256) w/ Hand-Mask Support
+# -----------------------------------------------------------------------------
+#  Usage:   ./scripts/train.sh -d hand_mask
+# -----------------------------------------------------------------------------
+#  Directory layout per date-range folder:
+#    train/               RGB images for training
+#    train_hand_mask/     PNG hand masks (same filenames)
+#    val/                 RGB + *_mask files for validation
+#    visual_test/         Optional inference set
+# -----------------------------------------------------------------------------
+#  The lists `train.indir` and `train.hand_mask_dir` **must align 1-to-1** so the
+#  dataset knows which hand masks belong to which RGB images.
+# -----------------------------------------------------------------------------
+
+# @package _group_
+
+batch_size: 16
+val_batch_size: 16
+num_workers: 4
+
+train:
+  indir:
+    - ${location.data_root_dir}/field_thumbnail_dec12_dec21/train
+    - ${location.data_root_dir}/field_thumbnail_sep01_sep03/train
+  hand_mask_dir:
+    - ${location.data_root_dir}/field_thumbnail_dec12_dec21/train_hand_mask
+    - ${location.data_root_dir}/field_thumbnail_sep01_sep03/train_hand_mask
+  kind: hand_mask_multi
+  out_size: 256
+  mask_inflation: 21
+  mask_gen_kwargs:
+    irregular_proba: 1
+    irregular_kwargs:
+      max_angle: 4
+      max_len: 200
+      max_width: 100
+      max_times: 5
+      min_times: 1
+    box_proba: 1
+    box_kwargs:
+      margin: 10
+      bbox_min_size: 30
+      bbox_max_size: 150
+      max_times: 4
+      min_times: 1
+    segm_proba: 0
+  transform_variant: distortions
+  dataloader_kwargs:
+    batch_size: ${data.batch_size}
+    shuffle: True
+    num_workers: ${data.num_workers}
+
+val:
+  indir:
+    - ${location.data_root_dir}/field_thumbnail_dec12_dec21/val
+    - ${location.data_root_dir}/field_thumbnail_sep01_sep03/val
+  img_suffix: .png
+  dataloader_kwargs:
+    batch_size: ${data.val_batch_size}
+    shuffle: False
+    num_workers: ${data.num_workers}
+
+visual_test:
+  indir: ${location.data_root_dir}/field_thumbnail_sep01_sep03/visual_test
+  img_suffix: .png
+  pad_out_to_modulo: 32
+  dataloader_kwargs:
+    batch_size: 1
+    shuffle: False
+    num_workers: ${data.num_workers}
