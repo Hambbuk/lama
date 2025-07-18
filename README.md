@@ -39,15 +39,47 @@ ${data_root_dir}/field_thumbnail_<date_range>/
 ---
 
 ## 3. Edit Configs
-1. `configs/training/location/thumbnail.yaml`
-   ```yaml
-   data_root_dir: /absolute/path/to/thumbnail_dataset
-   ```
-2. `configs/training/data/hand_mask.yaml`
-   * Update `train.indir` and `train.hand_mask_dir` to match your date ranges.
-   * Tune `batch_size`, `mask_inflation`, etc. if needed.
+The project uses **Hydra**. Configuration is split into two YAML files you normally edit:
 
-> All files rely on Hydra interpolation (e.g. `${location.data_root_dir}`). When calling the shell scripts pass **names without the `.yaml` extension** via `-m`, `-l`, `-d`.
+1. **Global paths –** `configs/training/location/thumbnail.yaml`
+   ```yaml
+   # Absolute path to your dataset root (see folder tree below)
+   data_root_dir: /absolute/path/to/thumbnail_dataset
+
+   # Where checkpoints & logs are written (leave as-is or change)
+   out_root_dir: ${env:PROJECT_ROOT}/experiments
+   tb_dir:        ${env:PROJECT_ROOT}/tb_logs
+   ```
+
+2. **Data & augmentation –** `configs/training/data/hand_mask.yaml`
+   ```yaml
+   train:
+     # RGB folders (one per date-range)
+     indir:
+       - ${location.data_root_dir}/field_thumbnail_dec12_dec21/train
+       - ${location.data_root_dir}/field_thumbnail_sep01_sep03/train
+
+     # Hand-mask folders — MUST match order above
+     hand_mask_dir:
+       - ${location.data_root_dir}/field_thumbnail_dec12_dec21/train_hand_mask
+       - ${location.data_root_dir}/field_thumbnail_sep01_sep03/train_hand_mask
+
+     kind: hand_mask_multi   # <- uses hand masks
+     out_size: 256           # network input size in pixels
+     mask_inflation: 21      # dilate hand mask (px) before merging
+   ```
+
+   **Common tweaks**
+   * `batch_size`, `val_batch_size` – reduce if you hit OOM.
+   * `transform_variant` – e.g. `distortions_light` for faster training.
+
+**Calling scripts**
+When you launch any script (`train.sh`, `inference.sh`, …) pass **config names without the `.yaml` extension**:
+```bash
+./scripts/train.sh -m lama-fourier -l thumbnail -d hand_mask   # OK
+```
+
+Hydra merges them in the order [model] → location → data.
 
 ---
 
@@ -81,9 +113,10 @@ If `-i` / `-o` are omitted the script falls back to `./demo` and `./outputs`.
 ```bash
 ./scripts/export_to_onnx.sh \
     -m ./experiments/<exp_dir> \   # experiment directory
-    -c best.ckpt \                 # or last.ckpt
-    -o model.onnx \                # output file name
-    -s                              # (optional) run onnx-simplifier
+    -c best.ckpt \                 # [optional] checkpoint file
+    -o model.onnx \                # [optional] output path
+    -s                              # run onnx-simplifier (default ON)
+    -t ./demo                       # [optional] quick test with demo image & mask
 ```
 
 ---
