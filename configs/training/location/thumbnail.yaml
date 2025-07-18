@@ -1,0 +1,23 @@
+# -----------------------------------------------------------------------------
+# thumbnail.yaml — Location config for Thumbnail Inpainting Experiments
+# -----------------------------------------------------------------------------
+# 1) Each key is referenced by other configs via the `${location.<key>}` syntax.
+# 2) Keep paths **absolute** or relative to the project root.
+# 3) Edit ONLY the values on the right-hand side.
+# -----------------------------------------------------------------------------
+
+# Path that contains the *three* date-range folders shown in README (train/val/...)
+# Example: /ssd/datasets/thumbnail
+# NOTE: no trailing slash needed.
+data_root_dir: /path/to/thumbnail_dataset
+
+# Where to store experiment logs & checkpoints (automatically created if absent)
+# Defaults to <PROJECT_ROOT>/experiments — feel free to override.
+out_root_dir: ${env:PROJECT_ROOT}/experiments
+
+# TensorBoard will watch this directory.
+tb_dir: ${env:PROJECT_ROOT}/tb_logs
+
+# Folder used by PyTorch-hub; models are downloaded/cached here.
+# You normally don’t need to change this.
+pretrained_models: ${env:TORCH_HOME}

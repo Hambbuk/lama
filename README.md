@@ -663,3 +663,31 @@ train:
 > **🌟 Pro-Tip:** Keep multiple experiment YAMLs (`abl-05.yaml`, `abl-06.yaml`, …) that all reuse the same `thumbnail.yaml`. This way you only change paths **once**.
 
 Happy training, and may your loss curves be ever-descending! 📉✨
+
+### 1-A. Hand-Mask Aware Training  
+If your dataset contains **`train_hand_mask/`** (pixel-wise annotations of hands in the scene),
+add its path to *each* `train.indir` entry by appending `?hand_mask_dir=<abs_or_rel_path>` (see the comment in the YAML below).  During training the dataloader will expand the mask so that hands stay **un-inpainted**.  The parameter `mask_inflation` controls the dilation radius (in pixels).
+
+> Example snippet (inside `abl-04-hand-mask.yaml`)
+> ```yaml
+> train:
+>   # RGB thumbnails
+>   indir:
+>     - ${location.data_root_dir}/field_thumbnail_dec12_dec21/train
+>     - ${location.data_root_dir}/field_thumbnail_sep01_sep03/train
+>   # ✋ Hand segmentation in the *same* order as RGB folders
+>   hand_mask_dir:
+>     - ${location.data_root_dir}/field_thumbnail_dec12_dec21/train_hand_mask
+>     - ${location.data_root_dir}/field_thumbnail_sep01_sep03/train_hand_mask
+>   kind: hand_mask_multi         # custom dataset class
+>   mask_inflation: 21            # dilate hand mask by Ø=21 px before merging
+>   ...
+> ```
+
+---
+
+## Sources & Credits
+•  Paper — *Resolution-Robust Large Mask Inpainting with Fourier Convolutions* (LaMa), R. Suvorov et al., 2021.  
+•  Original code — https://github.com/advimman/lama  
+•  Thumbnail dataset — Internal capture; masks generated with in-house annotation tool.  
+•  Hand-segmentation masks powered by [MediaPipe Hands](https://github.com/google/mediapipe) (Apache 2.0).
