@@ -18,3 +18,9 @@ webdataset
 packaging
 scikit-learn==0.24.2
 wldhx.yadisk-direct
+# Additional dependencies for thumbnail training & ONNX export
+torch>=2.0
+torchvision>=0.15
+onnx>=1.15
+onnx-simplifier>=0.4.33
+onnxruntime-gpu # fallback to onnxruntime if no GPU

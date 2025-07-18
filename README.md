@@ -1,4 +1,66 @@
 # 🦙 LaMa: Resolution-robust Large Mask Inpainting with Fourier Convolutions
+## Thumbnail Training Quick-Start Guide
+
+> This section provides a **minimal, no-nonsense recipe** for training, testing, and exporting the inpainting model on the *thumbnail* dataset.
+>
+> If you only care about thumbnail experiments, you can skip the rest of this README.
+
+### 0. Requirements & Installation
+
+```bash
+# (Optional) create an isolated environment
+python3 -m venv venv
+source venv/bin/activate
+
+# Install core dependencies
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+If you have a CUDA-capable GPU, install the matching PyTorch wheel. For example (CUDA 11.8):
+
+```bash
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
+```
+
+### 1. Dataset Layout
+Your dataset root must follow this pattern (one sub-folder per date range):
+
+```
+${data_root_dir}
+└── field_thumbnail_<date_range>
+    ├── train/
+    ├── val/
+    └── visual_test/
+```
+Each of the three folders contains *paired* images and masks.
+
+### 2. Adjust Configs
+1. `configs/location/thumbnail.yaml` – set `data_root_dir` to the path shown above.
+2. `configs/data/abl-04.yaml`   – review the `train.indir`, `val.indir`, and `visual_test.indir` lists. Add or remove date ranges as needed.
+
+### 3. Train
+```bash
+chmod +x scripts/*.sh           # one-time permission fix
+./scripts/train.sh              # accepts -m, -l, -d if you want to override defaults
+```
+The script wraps `python -m bin.train` and takes care of `PYTHONPATH` and `TORCH_HOME` for you.
+
+### 4. Inference
+```bash
+./scripts/inference.sh -m <path_to_experiment_dir> -i <input_dir> -o <output_dir>
+```
+If you omit `-i` and `-o`, the script falls back to `./examples` and `./outputs`.
+
+### 5. Export to ONNX (optional)
+```bash
+./scripts/export_to_onnx.sh -m <path_to_experiment_dir> -c best.ckpt -o model.onnx -s
+```
+The `-s` flag runs `onnx-simplifier` after export.
+
+---
+
+Need more detail? Read the original LaMa documentation below—or peek into each script with `--help` for full flag reference.
 
 by Roman Suvorov, Elizaveta Logacheva, Anton Mashikhin, 
 Anastasia Remizova, Arsenii Ashukha, Aleksei Silvestrov, Naejin Kong, Harshith Goka, Kiwoong Park, Victor Lempitsky.
