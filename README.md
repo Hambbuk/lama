@@ -4,7 +4,7 @@ This is a **minimal guide** for training, testing, and exporting the LaMa-based 
 
 ---
 
-## 1. Install Requirements
+## 1. Install Requirements (Python 3.8 – 3.10)
 ```bash
 # optional: isolate dependencies
 python -m venv venv && source venv/bin/activate
@@ -13,21 +13,11 @@ python -m venv venv && source venv/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt
 
-# GPU users – install the PyTorch wheel that matches your card/driver
-# (replace `torch==x.y.z` with the latest stable if needed)
-
-| GPU             | Recommended CUDA wheel | Install command |
-|-----------------|------------------------|-----------------|
-| NVIDIA RTX 4090 | cu121 (CUDA 12.1)      | `pip install torch==2.1.0+cu121 torchvision==0.16.0+cu121 \
-  --extra-index-url https://download.pytorch.org/whl/cu121` |
-| NVIDIA RTX 3090 | cu118 (CUDA 11.8)      | `pip install torch==2.0.1+cu118 torchvision==0.15.2+cu118 \
-  --extra-index-url https://download.pytorch.org/whl/cu118` |
-| NVIDIA A100     | cu118 (CUDA 11.8)      | `pip install torch==2.0.1+cu118 torchvision==0.15.2+cu118 \
-  --extra-index-url https://download.pytorch.org/whl/cu118` |
-| NVIDIA H100     | cu121 (CUDA 12.1)      | `pip install torch==2.1.0+cu121 torchvision==0.16.0+cu121 \
-  --extra-index-url https://download.pytorch.org/whl/cu121` |
-
-**Tip:** make sure your NVIDIA driver supports the chosen CUDA version (e.g. ≥ 535 for CUDA 12.1).
+# The requirements file already includes `torch` and `torchvision`.
+# If you need a GPU-specific wheel, uninstall the CPU build and install the
+# matching CUDA build, e.g. for CUDA 11.8:
+#   pip uninstall -y torch torchvision
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
 ```
 
 ---
