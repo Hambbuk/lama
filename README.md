@@ -473,3 +473,131 @@ If you found this code helpful, please consider citing:
   year={2021}
 }
 ```
+
+# 💫 Project Setup & Data Preparation Guide
+
+Welcome, fellow AI artisan! 🤖✨  Before you unleash the training script, let’s make sure your **data, directories, and configs** are in perfect harmony.  This guide explains **what to edit, where to place your data,** and **how every YAML key works** – all wrapped up in a fancy (yet practical) README.
+
+---
+
+## 1. Directory Layout at a Glance
+
+```text
+/workspace                # 👈 Project root (a.k.a ${env:PROJECT_ROOT})
+├── experiments/          # 📦 Checkpoints & evaluation outputs       (out_root_dir)
+├── tb_logs/              # 📊 TensorBoard logs                      (tb_dir)
+├── dataset/              # (optional) your local copy of the data   (data_root_dir)
+└── configs/              # 📜 YAML configuration files
+```
+
+The **dataset** itself needs to live (or be symlinked) under a *single* `data_root_dir` that will later expand to the individual date-range folders.
+
+### Expected Dataset Tree
+
+```text
+${data_root_dir}
+├── field_thumbnail_dec12_dec21
+│   ├── train
+│   │   ├── <image>.jpg / <mask>.png
+│   ├── val
+│   │   ├── <image>.png / <mask>.png
+│   └── visual_test
+│       ├── <image>.png / <mask>.png
+├── field_thumbnail_jan05_jan09
+│   └── ...
+└── field_thumbnail_sep01_sep03
+    └── ...
+```
+
+✔️ **Golden rule:** *Each* date-range folder **must** contain the classic triplet `train / val / visual_test` and *nothing else*.
+
+---
+
+## 2. The Two YAML Files – What & Why?
+
+| File | Purpose |
+|------|---------|
+| `thumbnail.yaml` | **Global paths & environment hooks** shared across runs. Think of it as your *“where is my data?”* file. |
+| `abl-04.yaml`    | **Experiment-specific knobs** (batch size, augmentation, etc.). Feeds on the paths defined in `thumbnail.yaml`. |
+
+### 2.1 `thumbnail.yaml` in Depth
+
+```yaml
+# ... existing code ...
+data_root_dir: /ssd/dohoon/dataset/thumbnail  # ← EDIT ME if your dataset lives elsewhere
+out_root_dir: ${env:PROJECT_ROOT}/experiments  # Where checkpoints & logs are stored
+# ... existing code ...
+```
+
+🔧 **To-Do:**
+1. Change `data_root_dir` so that it points to your top-level dataset folder (see tree above).
+2. Keep `out_root_dir`, `tb_dir`, and `pretrained_models` as-is, unless your project uses a different convention.
+3. Make sure environment variables (`PROJECT_ROOT`, `TORCH_HOME`) are exported in your shell (typically via `.bashrc`).
+
+> ```bash
+> export PROJECT_ROOT=/workspace
+> export TORCH_HOME=$HOME/.cache/torch  # or any custom path
+> ```
+
+### 2.2 `abl-04.yaml` in Depth
+
+Key snippet:
+
+```yaml
+train:
+  indir:
+    - ${location.data_root_dir}/field_thumbnail_dec12_dec21/train
+    - ${location.data_root_dir}/field_thumbnail_sep01_sep03/train
+    - ${location.data_root_dir}/field_thumbnail_dec12_dec21/train  # (dup?)
+  kind: hand_mask_multi
+  out_size: 256
+  mask_inflation: 21
+  # ...
+```
+
+🧐 **What to check/edit:**
+
+1. **`indir`** — list every `train` folder you actually own.  Remove duplicates or add new ranges (`field_thumbnail_jan05_jan09/train`, etc.).
+2. **`val.indir` & `visual_test.indir`** — same deal for `val` and `visual_test`.
+3. **Augmentation params** (`mask_gen_kwargs`, `transform_variant`) – tweak as you like; defaults work fine.
+4. **`batch_size`, `val_batch_size`, `num_workers`** – tune for your GPU & CPU.
+
+
+> 💡 *Tip:* You can comment-out an entire date range by prefixing with `#` instead of removing it, e.g.:
+> ```yaml
+>   # - ${location.data_root_dir}/field_thumbnail_apr10_apr12/train
+> ```
+
+---
+
+## 3. Quick-Start Checklist ✅
+
+1. 🔌  **Mount / copy the dataset** so the folder structure matches section 1.
+2. ✍️  **Edit `thumbnail.yaml`** – set `data_root_dir`.
+3. ✍️  **Inspect `abl-04.yaml`** – prune or extend the `indir` lists.
+4. 🚀  **Run training**:
+   ```bash
+   python train.py \
+       --config configs/abl-04.yaml \
+       --config configs/thumbnail.yaml
+   ```
+5. 🖥️  **Monitor TensorBoard**:
+   ```bash
+   tensorboard --logdir tb_logs
+   ```
+
+---
+
+## 4. Troubleshooting & FAQs
+
+| Symptom | Fix |
+|---------|-----|
+| `FileNotFoundError: …/train` | Verify `data_root_dir` and each `indir` entry. |
+| GPU OOM | Lower `batch_size` in `abl-04.yaml`. |
+| `KeyError: location` | Ensure you passed both configs when launching training (see step 4). |
+
+---
+
+> **🌟 Pro-Tip:** Keep multiple experiment YAMLs (`abl-05.yaml`, `abl-06.yaml`, …) that all reuse the same `thumbnail.yaml`. This way you only change paths **once**.
+
+Happy training, and may your loss curves be ever-descending! 📉✨
