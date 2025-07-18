@@ -4,20 +4,19 @@ This is a **minimal guide** for training, testing, and exporting the LaMa-based 
 
 ---
 
-## 1. Install Requirements (Python 3.8 – 3.10)
+## 1. Install Requirements with Conda (Python 3.8 – 3.10)
 ```bash
-# optional: isolate dependencies
-python -m venv venv && source venv/bin/activate
+# 1) create and activate an isolated env (replace 3.10 with 3.8–3.10 as desired)
+conda create -n lama_py310 python=3.10 -y
+conda activate lama_py310
 
-# core Python packages
-pip install --upgrade pip
+# 2) upgrade pip (optional but recommended) and install deps
+python -m pip install --upgrade pip
 pip install -r requirements.txt
 
-# The requirements file already includes `torch` and `torchvision`.
-# If you need a GPU-specific wheel, uninstall the CPU build and install the
-# matching CUDA build, e.g. for CUDA 11.8:
-#   pip uninstall -y torch torchvision
-#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
+# 3) (GPU) if you need a CUDA-enabled PyTorch wheel:
+#    pip uninstall -y torch torchvision
+#    pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118   # CUDA 11.8 example
 ```
 
 ---
