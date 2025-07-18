@@ -31,12 +31,17 @@ def preprocess_img(path: Path, size: int = 256) -> np.ndarray:
     return img[np.newaxis]  # NCHW
 
 
-def preprocess_mask(path: Path, size: int = 256) -> np.ndarray:
+def preprocess_mask(path: Path, size: int = 256, inflate: int | None = None) -> np.ndarray:
     mask = cv2.imread(str(path), cv2.IMREAD_GRAYSCALE)
     if mask is None:
         raise FileNotFoundError(path)
+
+    if inflate and inflate > 0:
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (inflate, inflate))
+        mask = cv2.dilate(mask, kernel)
+
     mask = cv2.resize(mask, (size, size), interpolation=cv2.INTER_NEAREST)
-    mask = (mask > 127).astype(np.float32)  # binarize
+    mask = mask.astype(np.float32) / 255.0
     mask = mask[np.newaxis, np.newaxis, ...]  # NCHW
     return mask
 
@@ -58,10 +63,11 @@ def main():
     parser.add_argument("--image", required=True, help="Path to RGB image")
     parser.add_argument("--mask", required=True, help="Path to grayscale mask")
     parser.add_argument("--output", required=True, help="Where to save result PNG")
+    parser.add_argument("--inflate", type=int, default=0, help="Mask dilation radius (px)")
     args = parser.parse_args()
 
     img = preprocess_img(Path(args.image))
-    mask = preprocess_mask(Path(args.mask))
+    mask = preprocess_mask(Path(args.mask), inflate=args.inflate)
 
     sess = ort.InferenceSession(args.model, providers=["CUDAExecutionProvider", "CPUExecutionProvider"])
     inputs = {sess.get_inputs()[0].name: img, sess.get_inputs()[1].name: mask}
