@@ -1,79 +1,86 @@
 # Thumbnail Inpainting – Quick Start
 
-> Lightweight guide to train, test, and export the LaMa-based thumbnail inpainting model with hand-mask support.
+This is a **minimal guide** for training, testing, and exporting the LaMa-based thumbnail inpainting model (with optional hand-mask constraints).
 
 ---
 
-## 1  Install Requirements
+## 1. Install Requirements
 ```bash
-python -m venv venv && source venv/bin/activate   # optional but recommended
-pip install --upgrade pip
-pip install -r requirements.txt                   # core deps
+# optional: isolate dependencies
+python -m venv venv && source venv/bin/activate
 
-# (GPU) pick the wheel matching your CUDA version, e.g. CUDA 11.8
+# core Python packages
+pip install --upgrade pip
+pip install -r requirements.txt
+
+# GPU users – pick the wheel that matches your CUDA version, e.g. CUDA 11.8
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
 ```
 
 ---
 
-## 2  Prepare Dataset
+## 2. Prepare the Dataset
 ```
 ${data_root_dir}/field_thumbnail_<date_range>/
 ├─ train/               *.jpg
-├─ train_hand_mask/     *.png   # same base-name as JPG
+├─ train_hand_mask/     *.png   # single-channel hand masks (same basename)
 ├─ val/                 image + *_mask.png pairs
-└─ visual_test/         (optional) image + *_mask.png
+└─ visual_test/         (optional) image + *_mask.png pairs
 ```
 
 ---
 
-## 3  Edit Configs
+## 3. Edit Configs
 1. `configs/training/location/thumbnail.yaml`
    ```yaml
-   data_root_dir: /abs/path/to/thumbnail_dataset
+   data_root_dir: /absolute/path/to/thumbnail_dataset
    ```
 2. `configs/training/data/hand_mask.yaml`
-   * `train.indir` & `train.hand_mask_dir` – date-range folders you own
-   * `batch_size`, `mask_inflation` – tweak for your GPU
+   * Update `train.indir` and `train.hand_mask_dir` to match your date ranges.
+   * Tune `batch_size`, `mask_inflation`, etc. if needed.
 
-> 모든 설정은 Hydra 구문(`${location.data_root_dir}` 등)를 사용하므로 **파일 확장자는 빼고** `-m/-l/-d` 옵션으로 지정합니다.
+> All files rely on Hydra interpolation (e.g. `${location.data_root_dir}`). When calling the shell scripts pass **names without the `.yaml` extension** via `-m`, `-l`, `-d`.
 
 ---
 
-## 4  Train
+## 4. Train
 ```bash
-chmod +x scripts/*.sh               # 최초 1회 권한 부여
-./scripts/train.sh                  # 기본값: lama-fourier / thumbnail / hand_mask
-# 커스텀 예시
+# one-time permission fix
+chmod +x scripts/*.sh
+
+# default: model=lama-fourier, location=thumbnail, data=hand_mask
+./scripts/train.sh
+
+# example override
 # ./scripts/train.sh -m lama-fourier -l thumbnail -d hand_mask
 ```
-체크포인트와 로그는 `experiments/` 하위에 자동 저장됩니다.
+Checkpoints and TensorBoard logs are written under `experiments/`.
 
 ---
 
-## 5  Inference
+## 5. Inference
 ```bash
 ./scripts/inference.sh \
     -m ./experiments/<exp_dir> \
     -i ./demo \
     -o ./outputs
 ```
-`-i/-o` 생략 시 `./demo`, `./outputs` 가 기본값입니다.
+If `-i` / `-o` are omitted the script falls back to `./demo` and `./outputs`.
 
 ---
 
-## 6  Export to ONNX
+## 6. Export to ONNX
 ```bash
 ./scripts/export_to_onnx.sh \
-    -m ./experiments/<exp_dir> \   # 모델 디렉터리
+    -m ./experiments/<exp_dir> \   # experiment directory
     -c best.ckpt \                 # or last.ckpt
-    -o model.onnx \
-    -s                              # onnx-simplifier 적용 (선택)
+    -o model.onnx \                # output file name
+    -s                              # (optional) run onnx-simplifier
 ```
 
 ---
 
-## 7  Credits
-* LaMa – Suvorov et al., 2021 (MIT License)
-* Code base forked from <https://github.com/advimman/lama>
-* Hand masks generated via MediaPipe Hands (Apache 2.0)
+## 7. Credits
+* Original LaMa paper – Suvorov *et al.* 2021 ([arXiv:2109.07161](https://arxiv.org/abs/2109.07161))
+* Code forked from the official repository: <https://github.com/advimman/lama>
+* Hand masks generated with **MediaPipe Hands** (Apache 2.0).
