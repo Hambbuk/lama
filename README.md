@@ -48,9 +48,9 @@ The script wraps `python -m bin.train` and takes care of `PYTHONPATH` and `TORCH
 
 ### 4. Inference
 ```bash
-./scripts/inference.sh -m <path_to_experiment_dir> -i <input_dir> -o <output_dir>
+./scripts/inference.sh -m <path_to_experiment_dir> -i ./demo -o ./outputs
 ```
-If you omit `-i` and `-o`, the script falls back to `./examples` and `./outputs`.
+If you omit `-i`/`-o`, the script defaults to `./demo` and `./outputs`.
 
 ### 5. Export to ONNX (optional)
 ```bash

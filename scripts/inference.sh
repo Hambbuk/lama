@@ -10,7 +10,7 @@
 #
 # Flags:
 #   -m  Trained model path (required)
-#   -i  Input directory       (default: ./examples)
+#   -i  Input directory       (default: ./demo)
 #   -o  Output directory      (default: ./outputs)
 #   -h  Show help & exit
 #
@@ -18,7 +18,8 @@
 set -euo pipefail
 
 MODEL_PATH=""
-INPUT_DIR="./examples"
+# Default folder with demo images
+INPUT_DIR="./demo"
 OUTPUT_DIR="./outputs"
 
 usage() { grep '^#' "$0" | cut -c4-; exit "${1:-0}"; }
@@ -35,7 +36,7 @@ done
 shift $((OPTIND - 1))
 
 [ -n "$MODEL_PATH" ] || { echo "[ERROR] -m <model_path> is required"; usage 1; }
-INPUT_DIR="${INPUT_DIR:-$(pwd)/examples}"
+INPUT_DIR="${INPUT_DIR:-$(pwd)/demo}"
 OUTPUT_DIR="${OUTPUT_DIR:-$(pwd)/outputs}"
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
